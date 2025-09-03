@@ -2,7 +2,7 @@ const chatbox = document.getElementById("chatbox");
 const userInput = document.getElementById("userInput");
 
 // Replace with your deployed backend URL
-const BACKEND_URL = "https://myauisaibot.onrender.com";
+const BACKEND_URL = "https://myauisaibot.onrender.com/chat";
 
 async function sendMessage() {
   const message = userInput.value.trim();
