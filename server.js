@@ -6,42 +6,49 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.post("/chat", async (req, res) => {
-  const { message } = req.body;
-  if (!message) return res.status(400).json({ error: "No message provided" });
+const PORT = process.env.PORT || 3000;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
+// Route: chatbot
+app.post("/chat", async (req, res) => {
   try {
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
+
+    // Call OpenAI API
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "gpt-4o-mini", // lightweight, fast
         messages: [
-          {
-            role: "system",
-            content: `
-You are an expert AUIS assistant specialized in registration, enrollment, scholarships, financial aid, course selection, and academic policies.
-Only answer questions related to AUIS. Be concise, polite, and helpful.
-If the question is unrelated, respond with: "Sorry, I can only answer AUIS registration or scholarship questions."
-            `
-          },
+          { role: "system", content: "You are a helpful AUIS chatbot answering questions about registration and scholarships." },
           { role: "user", content: message }
         ],
-        max_tokens: 300
-      })
+      }),
     });
 
     const data = await response.json();
-    const answer = data.choices[0].message.content;
-    res.json({ answer });
+    const reply = data.choices?.[0]?.message?.content || "Sorry, I couldn’t generate a response.";
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to get response from OpenAI" });
+    res.json({ reply });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Something went wrong" });
   }
 });
 
-app.listen(process.env.PORT || 3000, () => console.log("Server running..."));
+// Health check
+app.get("/", (req, res) => {
+  res.send("AUIS Chatbot backend is running ✅");
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
